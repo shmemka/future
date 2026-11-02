@@ -1,0 +1,103 @@
+@import "tailwindcss";
+@import "@fontsource-variable/unbounded";
+@import "@fontsource-variable/onest";
+
+/*
+  Дизайн-система «Путь в будущее»
+  Идея: маршрут. Навигация — станции на линии, прогресс — поезд, жетоны — золотые билеты.
+  Цвета: насыщенный фиолетовый как сигнал, лаванда как воздух, золото жетона и коралл как акценты.
+*/
+@theme {
+  --font-display: "Unbounded Variable", "Onest Variable", system-ui, sans-serif;
+  --font-sans: "Onest Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --color-ink: #22104f;          /* основной текст — глубокий фиолетовый, не чёрный */
+  --color-ink-soft: #5d4a8f;     /* второстепенный текст */
+  --color-violet: #5a1fe0;       /* сигнальный фиолетовый */
+  --color-violet-bright: #7b3cff;
+  --color-violet-deep: #2c0f7a;
+  --color-lilac: #c7b4ff;
+  --color-lavender: #ede6ff;
+  --color-mist: #f6f2ff;         /* фон приложения */
+  --color-gold: #ffc93c;         /* жетоны */
+  --color-gold-deep: #c98a00;
+  --color-coral: #ff5d8f;        /* акцент: мероприятия, живое */
+  --color-mint: #19c995;         /* успех */
+  --color-sky: #3fa7ff;
+
+  --radius-panel: 28px;
+  --radius-card: 20px;
+
+  --shadow-soft: 0 1px 2px rgb(44 15 122 / 0.06), 0 8px 24px -12px rgb(44 15 122 / 0.18);
+  --shadow-lift: 0 2px 4px rgb(44 15 122 / 0.08), 0 18px 40px -16px rgb(90 31 224 / 0.35);
+}
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--color-mist);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01";
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.02em; text-wrap: balance; }
+  p { text-wrap: pretty; }
+  :focus-visible { outline: 3px solid var(--color-violet-bright); outline-offset: 2px; border-radius: 10px; }
+  ::selection { background: var(--color-lilac); }
+  button { cursor: pointer; }
+  /* Элементы сетки не распирают колонки длинными словами — важно для телефонов */
+  .grid > * { min-width: 0; }
+  h1, h2, h3 { overflow-wrap: break-word; }
+  button:disabled { cursor: not-allowed; }
+}
+
+@layer components {
+  .panel { background: white; border-radius: var(--radius-panel); box-shadow: var(--shadow-soft); }
+  .card { background: white; border-radius: var(--radius-card); box-shadow: var(--shadow-soft); }
+  .field {
+    width: 100%; border-radius: 14px; border: 1.5px solid var(--color-lavender); background: white;
+    padding: 0.7rem 0.95rem; font-size: 1rem; color: var(--color-ink); transition: border-color .15s, box-shadow .15s;
+  }
+  .field:focus { outline: none; border-color: var(--color-violet-bright); box-shadow: 0 0 0 4px rgb(123 60 255 / .15); }
+  .field::placeholder { color: #a497c7; }
+  .label { display: block; font-size: .875rem; font-weight: 600; margin-bottom: .4rem; color: var(--color-ink); }
+
+  /* Фирменный фон героя: глубокий фиолетовый с мягким свечением */
+  .hero-surface {
+    background:
+      radial-gradient(120% 90% at 100% 0%, rgb(255 93 143 / .35) 0%, transparent 45%),
+      radial-gradient(80% 80% at 0% 100%, rgb(63 167 255 / .28) 0%, transparent 50%),
+      linear-gradient(135deg, #2c0f7a 0%, #5a1fe0 55%, #7b3cff 100%);
+    color: white;
+  }
+  .violet-surface { background: linear-gradient(135deg, #5a1fe0, #7b3cff); color: white; }
+
+  /* Текст урока */
+  .prose-lesson h2 { font-size: 1.25rem; margin: 1.8rem 0 .7rem; }
+  .prose-lesson p { margin: .85rem 0; line-height: 1.7; font-size: 1.0625rem; }
+  .prose-lesson ul { margin: .7rem 0; padding-left: 0; list-style: none; }
+  .prose-lesson li { position: relative; padding-left: 1.6rem; margin: .45rem 0; line-height: 1.6; font-size: 1.0625rem; }
+  .prose-lesson li::before {
+    content: ""; position: absolute; left: .25rem; top: .62em; width: .55rem; height: .55rem; border-radius: 99px;
+    background: var(--color-violet-bright); box-shadow: 0 0 0 3px var(--color-lavender);
+  }
+  .prose-lesson blockquote {
+    margin: 1.2rem 0; padding: 1rem 1.2rem; border-radius: 16px; background: var(--color-lavender); font-weight: 500; line-height: 1.6;
+  }
+}
+
+/* Движение: короткое и по делу. Уважаем системную настройку. */
+@keyframes pop-in { from { opacity: 0; transform: translateY(6px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes train-ride { from { left: 0; } }
+@keyframes route-draw { from { stroke-dashoffset: var(--len, 900); } to { stroke-dashoffset: 0; } }
+@keyframes coin { 0% { transform: scale(.6) rotate(-20deg); opacity: 0; } 60% { transform: scale(1.15) rotate(6deg); opacity: 1; } 100% { transform: none; } }
+.animate-pop { animation: pop-in .22s ease-out both; }
+.animate-coin { animation: coin .5s cubic-bezier(.3,1.4,.5,1) both; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+}
+
+/* Нижняя навигация не должна перекрывать контент на телефоне */
+.safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom) + 5.5rem); }
+@media (min-width: 1024px) { .safe-bottom { padding-bottom: 3rem; } }
