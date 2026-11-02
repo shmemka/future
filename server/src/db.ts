@@ -1,30 +1,53 @@
-import Database from 'better-sqlite3'
-import fs from 'node:fs'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+// Слой доступа к базе. Один и тот же код маршрутов работает с двумя «движками»:
+//  • на сервере — better-sqlite3 (см. db-node.ts),
+//  • в браузере (сайт на GitHub Pages) — sql.js, SQLite в WebAssembly (см. client/src/offline).
+// Оба синхронные, поэтому интерфейс общий.
 
-const here = path.dirname(fileURLToPath(import.meta.url))
-const dbPath = process.env.DB_PATH ?? path.resolve(here, '../../data/future.db')
-fs.mkdirSync(path.dirname(dbPath), { recursive: true })
+export interface RunResult { changes: number; lastInsertRowid: number | bigint }
+export interface Driver {
+  get(sql: string, params: unknown[]): any
+  all(sql: string, params: unknown[]): any[]
+  run(sql: string, params: unknown[]): RunResult
+  exec(sql: string): void
+}
 
-export const db = new Database(dbPath)
-db.pragma('journal_mode = WAL')
-db.pragma('foreign_keys = ON')
+let driver: Driver | null = null
+export function setDriver(d: Driver) { driver = d }
+const d = () => {
+  if (!driver) throw new Error('База данных не инициализирована')
+  return driver
+}
 
-export function migrate() {
-  db.exec(fs.readFileSync(path.join(here, 'schema.sql'), 'utf8'))
+export const q = {
+  get: <T = any>(sql: string, ...params: unknown[]) => d().get(sql, params) as T | undefined,
+  all: <T = any>(sql: string, ...params: unknown[]) => d().all(sql, params) as T[],
+  run: (sql: string, ...params: unknown[]) => d().run(sql, params),
+  exec: (sql: string) => d().exec(sql),
+}
+
+let depth = 0
+/** Транзакция. Вложенные вызовы выполняются внутри внешней. */
+export function tx<T>(fn: () => T): T {
+  if (depth > 0) return fn()
+  depth++
+  q.exec('BEGIN')
+  try {
+    const r = fn()
+    q.exec('COMMIT')
+    return r
+  } catch (e) {
+    q.exec('ROLLBACK')
+    throw e
+  } finally {
+    depth--
+  }
+}
+
+export function migrate(schemaSql: string) {
+  q.exec(schemaSql)
 }
 
 export function isEmpty() {
-  const row = db.prepare('SELECT COUNT(*) AS n FROM users').get() as { n: number }
-  return row.n === 0
+  const row = q.get<{ n: number }>('SELECT COUNT(*) AS n FROM users')
+  return !row || row.n === 0
 }
-
-/** Короткие хелперы над prepared statements */
-export const q = {
-  get: <T = any>(sql: string, ...params: unknown[]) => db.prepare(sql).get(...params) as T | undefined,
-  all: <T = any>(sql: string, ...params: unknown[]) => db.prepare(sql).all(...params) as T[],
-  run: (sql: string, ...params: unknown[]) => db.prepare(sql).run(...params),
-}
-
-export const tx = <T>(fn: () => T) => db.transaction(fn)()

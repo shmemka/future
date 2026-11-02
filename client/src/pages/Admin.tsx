@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Search, Plus, Pencil, ShieldOff, ShieldCheck, Coins, UserCheck, KeyRound } from 'lucide-react'
-import { api } from '../lib/api'
+import { api, STATIC_MODE, resetDemoData } from '../lib/api'
 import { useSession } from '../lib/session'
 import { fmtDate, fmtTime, timeAgo } from '../lib/format'
 import { Avatar, Button, ButtonLink, Chip, ErrorBox, Field, Modal, PageHeader, Spinner, Tabs, TokenGlyph, cx, useToast } from '../components/ui'
@@ -80,6 +80,13 @@ function Overview({ q }: { q: any }) {
             <ButtonLink to="/rating" variant="secondary">Рейтинг</ButtonLink>
             <ButtonLink to="/admin?tab=users" variant="secondary">Пользователи</ButtonLink>
           </div>
+          {STATIC_MODE && (
+            <button className="mt-4 text-sm font-semibold text-ink-soft hover:text-[#c2185b]" onClick={async () => {
+              if (!confirm('Вернуть все данные платформы к исходному демо-состоянию? Новые аккаунты, ответы и публикации удалятся.')) return
+              await resetDemoData()
+              window.location.href = import.meta.env.BASE_URL + 'login'
+            }}>Сбросить демо-данные</button>
+          )}
         </div>
       </div>
     </div>

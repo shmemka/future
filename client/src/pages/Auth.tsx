@@ -2,7 +2,7 @@ import { useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { Eye, EyeOff } from 'lucide-react'
-import { api } from '../lib/api'
+import { api, STATIC_MODE, resetDemoData } from '../lib/api'
 import { Button, Field, cx } from '../components/ui'
 import { Logo } from '../components/Layout'
 import { DIRECTIONS, DIRECTION_KEYS } from '../../../shared/constants'
@@ -88,8 +88,27 @@ export function Login() {
             </button>
           ))}
         </div>
+        {STATIC_MODE && <ResetDemo />}
       </div>
     </AuthShell>
+  )
+}
+
+function ResetDemo() {
+  const [busy, setBusy] = useState(false)
+  const qc = useQueryClient()
+  const reset = async () => {
+    if (!confirm('Вернуть платформу в исходное состояние? Все новые аккаунты, ответы и публикации на этом устройстве удалятся.')) return
+    setBusy(true)
+    await resetDemoData()
+    qc.clear()
+    setBusy(false)
+    alert('Готово: демо-данные восстановлены.')
+  }
+  return (
+    <button onClick={reset} disabled={busy} className="mt-3 text-sm font-semibold text-ink-soft hover:text-violet">
+      {busy ? 'Восстанавливаем…' : 'Начать демо заново'}
+    </button>
   )
 }
 

@@ -1,4 +1,4 @@
-import { db, q, tx } from './db.js'
+import { q, tx } from './db.js'
 import { hashPassword } from './lib/auth.js'
 import { award, evaluateAchievements, grantAchievement, logActivity } from './lib/progress.js'
 import { COURSES, EVENTS, CHANNELS, type SeedEvent } from './seed-content.js'
@@ -75,6 +75,7 @@ function at(daysAgo: number, fn: () => void) {
 }
 
 export function seed() {
+  const demoHash = hashPassword(DEMO_PASSWORD) // один хеш на все демо-аккаунты — быстрее, особенно в браузере
   tx(() => {
     // ── пользователи
     const ids: Record<string, number> = {}
@@ -82,7 +83,7 @@ export function seed() {
       const r = q.run(
         `INSERT INTO users (name, email, password_hash, role, city, school, avatar, avatar_emoji, headline, bio, interests, show_in_rating, created_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '-' || ? || ' days'))`,
-        u.name, u.email, hashPassword(DEMO_PASSWORD), (u as any).role ?? 'participant', u.city, (u as any).school ?? '',
+        u.name, u.email, demoHash, (u as any).role ?? 'participant', u.city, (u as any).school ?? '',
         u.avatar, u.emoji, (u as any).headline ?? '', u.bio, JSON.stringify(u.interests), (u as any).show_in_rating ?? 1,
         (u as any).role === 'participant' || !(u as any).role ? 20 + Math.floor(Math.random() * 25) : 45,
       )
@@ -92,7 +93,7 @@ export function seed() {
     q.run(
       `INSERT INTO users (name, email, password_hash, role, status, city, avatar, avatar_emoji, headline, interests)
        VALUES ('Сергей Лукин', 'sergey@demo.ru', ?, 'mentor', 'pending', 'Новосибирск', 'sky', '🎯', 'Тренер по ораторскому мастерству', '["leadership","media"]')`,
-      hashPassword(DEMO_PASSWORD),
+      demoHash,
     )
     const P = (email: string) => ids[email]
 
@@ -407,11 +408,11 @@ export function seed() {
     // Небольшие уведомления для демо-участника
     q.run("UPDATE notifications SET read_at = datetime('now') WHERE created_at < datetime('now', '-2 days')")
   })
-  console.log(`Демо-данные созданы. Пароль для всех демо-аккаунтов: ${DEMO_PASSWORD}`)
+  console.info(`Демо-данные созданы. Пароль для всех демо-аккаунтов: ${DEMO_PASSWORD}`)
 }
 
 export function wipe() {
-  db.exec(`
+  q.exec(`
     PRAGMA foreign_keys = OFF;
     DROP TABLE IF EXISTS help_requests; DROP TABLE IF EXISTS reports; DROP TABLE IF EXISTS messages;
     DROP TABLE IF EXISTS post_supports; DROP TABLE IF EXISTS comments; DROP TABLE IF EXISTS posts; DROP TABLE IF EXISTS channels;

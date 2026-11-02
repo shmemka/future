@@ -26,6 +26,6 @@ export function useLogout() {
   return async () => {
     await api.post('/auth/logout')
     qc.clear()
-    window.location.href = '/'
+    window.location.href = import.meta.env.BASE_URL
   }
 }
